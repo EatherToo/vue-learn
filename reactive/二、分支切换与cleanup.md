@@ -45,12 +45,25 @@
       // 改造一下effect函数
       function effect(fn) {
         const effectFn = () => {
+          // cleanup 函数会从所用保存了当前effectFn的地方删除掉当前的effectFn，effectFn的deps也会清空，双向删除
+          cleanup(effectFn)
           activeEffect = effectFn
+          // 开始执行后会触发track函数，依赖又开始重新收集了
           fn()
         }
         // 在effectFn上定义一个属性deps，用来储存依赖列表
         effectFn.deps = []
         effectFn()
+      }
+
+      function cleanup(effectFn) {
+        for (let i = 0; i < effectFn.deps.length; i++) {
+          const deps = effectFn.deps[i];
+          // 从依赖中删除当前的副作用函数
+          deps.delete(effectFn)
+        }
+        // 副作用函数的依赖数组也清空
+        effectFn.deps.length = 0
       }
 
       // 改造一下track函数
@@ -76,5 +89,23 @@
         }
       }
 
+      // 改造一下trigger函数
+      function trigger(target, key) {
+        const depsMap = targetEffectMap.get(target)
+        if (!depsMap) return
+
+        // 把副作用函数取出来执行一遍
+        const effectSet = depsMap.get(key)
+        // 拷贝一份effect在执行
+        const effectSetCopy = new Set(effectSet)
+        effectSetCopy.forEach((fn) => fn())
+      }
+
     ```
+
+    `trigger`函数中要拷贝一份`effect`的集合再执行的原因是：
+    1. `trigger`函数触发后，`effect`函数开始执行, effect就从effectSet中删除了
+    2. `effect`中会用到响应式对象的值，又触发了`track`函数，effect又被加入到effectSet中了
+    3. 形成了一个死循环
+
   
