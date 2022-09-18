@@ -1,13 +1,17 @@
-let activeEffect
-
 type Noop = () => void
+
+type EffectFnType = {
+  (): void
+  deps: Set<Noop>[]
+}
+let activeEffect: EffectFnType | undefined
 
 // 用来储存不同的响应式对象对应的depsMap, key为一个对象
 const targetEffectMap = new WeakMap<any, Map<string | symbol, Set<Noop>>>()
 
 // 改造一下effect函数
-function effect(fn) {
-  const effectFn = () => {
+export function effect(fn: Noop) {
+  const effectFn: EffectFnType = () => {
     // cleanup 函数会从所用保存了当前effectFn的地方删除掉当前的effectFn，effectFn的deps也会清空，双向删除
     cleanup(effectFn)
     activeEffect = effectFn
@@ -19,7 +23,7 @@ function effect(fn) {
   effectFn()
 }
 
-function cleanup(effectFn) {
+function cleanup(effectFn: EffectFnType) {
   for (let i = 0; i < effectFn.deps.length; i++) {
     const deps = effectFn.deps[i]
     // 从依赖中删除当前的副作用函数
@@ -30,7 +34,7 @@ function cleanup(effectFn) {
 }
 
 // 改造一下track函数
-function track(target, key) {
+export function track(target: any, key: string | symbol) {
   if (activeEffect) {
     // 取出target对应的depsMap
     let depsMap = targetEffectMap.get(target)
@@ -53,7 +57,7 @@ function track(target, key) {
 }
 
 // 改造一下trigger函数
-function trigger(target, key) {
+export function trigger(target: any, key: string | symbol) {
   const depsMap = targetEffectMap.get(target)
   if (!depsMap) return
 

@@ -1,15 +1,15 @@
-let activeEffect
+export type Noop = () => void
+let activeEffect: Noop | undefined
 
-function effect(fn) {
+export function effect(fn: Noop) {
   activeEffect = fn
   fn()
 }
-type Noop = () => void
 
 // 用来储存不同的响应式对象对应的depsMap, key为一个对象
 const targetEffectMap = new WeakMap<any, Map<string | symbol, Set<Noop>>>()
 
-function track(target, key) {
+export function track(target: any, key: string | symbol) {
   if (activeEffect) {
     /** 新增的代码 --- start */
     // 取出target对应的depsMap
@@ -30,7 +30,7 @@ function track(target, key) {
     effectSet.add(activeEffect)
   }
 }
-function trigger(target, key) {
+export function trigger(target: any, key: string | symbol) {
   /** 新增的代码 --- start */
   const depsMap = targetEffectMap.get(target)
   // 没有就不执行了
@@ -41,7 +41,7 @@ function trigger(target, key) {
   const effectSet = depsMap.get(key)
   effectSet && effectSet.forEach((fn) => fn())
 }
-function reactive(obj) {
+export function reactive(obj: any) {
   return new Proxy(obj, {
     get(target, key) {
       track(target, key)
