@@ -71,3 +71,16 @@ export function trigger(target: any, key: string | symbol) {
   const effectSetCopy = new Set(effectSet)
   effectSetCopy.forEach((fn) => fn())
 }
+export function reactive(obj: any) {
+  return new Proxy(obj, {
+    get(target, key) {
+      track(target, key)
+      return target[key]
+    },
+    set(target, key, value) {
+      target[key] = value
+      trigger(target, key)
+      return true
+    },
+  })
+}
