@@ -1,5 +1,5 @@
 type Noop = () => void
-type EffectOptions = { scheduler: (fn: Noop) => void }
+type EffectOptions = { scheduler?: (fn: Noop) => void }
 
 type EffectFnType = {
   (): void
